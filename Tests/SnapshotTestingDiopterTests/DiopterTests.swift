@@ -63,6 +63,7 @@ struct DiopterTests {
         #expect(SnapshotEnvironment.keepFailure(failed.path(percentEncoded: false), of: reference("reference.png")) == failed.path(percentEncoded: false))
     }
 
+    #if os(macOS)
     @Test func opensEachSnapshotsDirectoryAgainstTheFailuresMovedAside() throws {
         _ = SnapshotEnvironment.keepFailure(failed.path(percentEncoded: false), of: reference("AppTests/__Snapshots__/A/a.png"))
 
@@ -87,4 +88,5 @@ struct DiopterTests {
         #expect(FileManager.default.fileExists(atPath: opened.appending(path: "A/a.png").path(percentEncoded: false)))
         #expect(try SnapshotEnvironment.openFailures(in: failures, with: diopter).isEmpty)
     }
+    #endif
 }

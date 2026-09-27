@@ -78,6 +78,9 @@ public enum SnapshotEnvironment {
             .appending(path: "\(failuresDirectory.lastPathComponent).references", directoryHint: .notDirectory)
     }
 
+    // Only the Mac can open anything: a simulator leaves its failures to the
+    // scheme's post-action.
+    #if os(macOS)
     /**
      Moves the failures in `failuresDirectory` aside and opens `diopter` on
      each `__Snapshots__` directory they failed against, comparing it with
@@ -122,7 +125,6 @@ public enum SnapshotEnvironment {
             .first { FileManager.default.isExecutableFile(atPath: $0.path(percentEncoded: false)) }
     }
 
-    #if os(macOS)
     private static func openFailuresOnExit() {
         guard let diopter = findDiopter() else { return }
 
