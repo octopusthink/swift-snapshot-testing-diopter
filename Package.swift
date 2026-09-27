@@ -13,6 +13,7 @@ let package = Package(
     ],
     products: [
         .library(name: "SnapshotTestingDiopter", targets: ["SnapshotTestingDiopter"]),
+        .plugin(name: "InstallDiopterPostAction", targets: ["InstallDiopterPostAction"]),
     ],
     dependencies: [
         .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.19.0"),
@@ -23,6 +24,18 @@ let package = Package(
             dependencies: [
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
             ]
+        ),
+        .plugin(
+            name: "InstallDiopterPostAction",
+            capability: .command(
+                intent: .custom(
+                    verb: "install-diopter-post-action",
+                    description: "Adds a test post-action to your schemes that opens each run's snapshot failures in Diopter."
+                ),
+                permissions: [
+                    .writeToPackageDirectory(reason: "Adds a test post-action to your schemes that opens each run's snapshot failures in Diopter."),
+                ]
+            )
         ),
         .testTarget(
             name: "SnapshotTestingDiopterTests",
