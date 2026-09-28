@@ -116,11 +116,20 @@ public enum SnapshotEnvironment {
             }
     }
 
-    /// `diopter` on the `PATH`, or where Homebrew puts it.
+    /// `diopter` on the `PATH`, or where it's usually installed: Xcode doesn't
+    /// read your shell profile, so its `PATH` often doesn't have it.
     static func findDiopter() -> URL? {
         let path = ProcessInfo.processInfo.environment["PATH", default: ""].split(separator: ":").map(String.init)
+        let home = FileManager.default.homeDirectoryForCurrentUser.path(percentEncoded: false)
+        let usual = [
+            "\(home)/.local/bin",
+            "/opt/homebrew/bin",
+            "/usr/local/bin",
+            "/Applications/Diopter.app/Contents/Resources",
+            "\(home)/Applications/Diopter.app/Contents/Resources",
+        ]
 
-        return (path + ["/opt/homebrew/bin", "/usr/local/bin"])
+        return (path + usual)
             .map { URL(filePath: $0, directoryHint: .isDirectory).appending(path: "diopter") }
             .first { FileManager.default.isExecutableFile(atPath: $0.path(percentEncoded: false)) }
     }

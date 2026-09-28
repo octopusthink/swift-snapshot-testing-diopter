@@ -24,3 +24,4 @@ For failed snapshots to open in Diopter after a test suite finishes, run the pac
   ```
 
 By default the plugin adds the post-action to every scheme that runs tests.
+Run it again after updating this package to update the post-action to the latest version.

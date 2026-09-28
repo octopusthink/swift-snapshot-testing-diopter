@@ -9,8 +9,8 @@ import PackagePlugin
 /**
  Adds the test post-action that opens a run's snapshot failures in Diopter
  (see `SchemePostAction`) to an Xcode project's schemes: every scheme with
- tests, or only those named with `--scheme`. A scheme that has it already is
- left alone.
+ tests, or only those named with `--scheme`. A scheme that has it already gets
+ the current version of its script.
  */
 @main
 struct InstallDiopterPostAction: CommandPlugin {
@@ -40,6 +40,9 @@ struct InstallDiopterPostAction: CommandPlugin {
             case .installed(let updated):
                 try updated.write(to: url, atomically: true, encoding: .utf8)
                 print("\(name): added the test post-action that opens snapshot failures in Diopter.")
+            case .updated(let updated):
+                try updated.write(to: url, atomically: true, encoding: .utf8)
+                print("\(name): updated the test post-action that opens snapshot failures in Diopter.")
             case .alreadyInstalled:
                 print("\(name): already opens snapshot failures in Diopter.")
             case .noTests where named.isEmpty:

@@ -29,7 +29,11 @@ enum SchemePostAction {
         checkout="$(git -C "$SRCROOT" rev-parse --show-toplevel 2>/dev/null)" || checkout="$SRCROOT"
         failures="$checkout/build/SnapshotFailures"
         [ -d "$failures" ] || exit 0
-        diopter="$(PATH="$PATH:/opt/homebrew/bin:/usr/local/bin" command -v diopter)" || exit 0
+        # Xcode doesn't read your shell profile, so look where diopter's usually installed too.
+        diopter="$(PATH="$PATH:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/Applications/Diopter.app/Contents/Resources:$HOME/Applications/Diopter.app/Contents/Resources" command -v diopter)" || {
+          echo "\(marker): couldn't find diopter to open the failures in $failures." >&2
+          exit 0
+        }
         # Moved aside so a later run that fails nothing doesn't open them again.
         opened="$failures-opened"
         rm -rf "$opened" "$opened.references"
@@ -43,6 +47,8 @@ enum SchemePostAction {
 
     enum Outcome: Equatable {
         case installed(String)
+        /// Had an earlier version of the script, which is replaced.
+        case updated(String)
         case alreadyInstalled
         /// No `TestAction` with tests in it.
         case noTests
@@ -62,7 +68,10 @@ enum SchemePostAction {
     /// `scheme`, with the post-action added to its `TestAction`.
     static func install(in scheme: String) -> Outcome {
         guard hasTests(scheme), let testAction = testAction(in: scheme) else { return .noTests }
-        guard !scheme[testAction.body].contains(marker) else { return .alreadyInstalled }
+        if let installed = scheme[testAction.body].range(of: marker) {
+            return update(in: scheme, at: installed.lowerBound)
+        }
+
         guard let buildable = firstBuildableReference(in: scheme) else { return .noBuildable }
 
         let indent = indentation(ofLineAt: testAction.start, in: scheme)
@@ -87,6 +96,23 @@ enum SchemePostAction {
             """
 
         return .installed(String(scheme[..<insertion]) + postActions + String(scheme[insertion...]))
+    }
+
+    /// `scheme` with the script of the post-action whose `marker` is at
+    /// `index` replaced by the current one.
+    private static func update(in scheme: String, at index: String.Index) -> Outcome {
+        // An escaped attribute holds no `"`, so it runs from the quote before
+        // `index` to the next.
+        guard
+            let attribute = scheme[..<index].range(of: "scriptText = \"", options: .backwards),
+            let end = scheme[index...].firstIndex(of: "\"")
+        else { return .alreadyInstalled }
+
+        let current = escaped(script)
+
+        guard scheme[attribute.upperBound..<end] != current else { return .alreadyInstalled }
+
+        return .updated(String(scheme[..<attribute.upperBound]) + current + String(scheme[end...]))
     }
 
     // MARK: - Building the action
